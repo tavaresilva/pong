@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Pong - Controles W/S</title>
+  <style>
+    body { background: #222; margin: 0; overflow: hidden; }
+    canvas { display: block; margin: 0 auto; background: #000; }
+  </style>
+</head>
+<body>
+  <canvas id="pong" width="800" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById('pong');
+    const ctx = canvas.getContext('2d');
+
+    // Configurações
+    const paddleWidth = 10, paddleHeight = 100, ballSize = 10;
+    let leftY = canvas.height / 2 - paddleHeight / 2;
+    let rightY = canvas.height / 2 - paddleHeight / 2;
+    let leftSpeed = 0, rightSpeed = 0;
+    const paddleSpeed = 6;
+
+    let ballX = canvas.width / 2 - ballSize / 2;
+    let ballY = canvas.height / 2 - ballSize / 2;
+    let ballVelX = 5, ballVelY = 3;
+
+    // Desenhar
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Meio
+      ctx.fillStyle = "#fff";
+      for (let i = 0; i < canvas.height; i += 30) {
+        ctx.fillRect(canvas.width / 2 - 1, i, 2, 20);
+      }
+
+      // Raquetes
+      ctx.fillRect(20, leftY, paddleWidth, paddleHeight);
+      ctx.fillRect(canvas.width - 30, rightY, paddleWidth, paddleHeight);
+
+      // Bola
+      ctx.fillRect(ballX, ballY, ballSize, ballSize);
+    }
+
+    // Atualizar posições
+    function update() {
+      leftY += leftSpeed;
+      rightY += rightSpeed;
+
+      // Limites das raquetes
+      leftY = Math.max(0, Math.min(canvas.height - paddleHeight, leftY));
+      rightY = Math.max(0, Math.min(canvas.height - paddleHeight, rightY));
+
+      // Bola
+      ballX += ballVelX;
+      ballY += ballVelY;
+
+      // Rebater topo/fundo
+      if (ballY <= 0 || ballY + ballSize >= canvas.height) ballVelY *= -1;
+
+      // Rebater raquetes
+      if (
+        ballX <= 30 &&
+        ballY + ballSize >= leftY &&
+        ballY <= leftY + paddleHeight
+      ) {
+        ballVelX *= -1;
+        ballX = 30;
+      }
+      if (
+        ballX + ballSize >= canvas.width - 30 &&
+        ballY + ballSize >= rightY &&
+        ballY <= rightY + paddleHeight
+      ) {
+        ballVelX *= -1;
+        ballX = canvas.width - 30 - ballSize;
+      }
+
+      // Pontuação (resetar bola)
+      if (ballX < 0 || ballX > canvas.width) {
+        ballX = canvas.width / 2 - ballSize / 2;
+        ballY = canvas.height / 2 - ballSize / 2;
+        ballVelX *= -1;
+      }
+    }
+
+    // Controles
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'w' || e.key === 'W') leftSpeed = -paddleSpeed;
+      if (e.key === 's' || e.key === 'S') leftSpeed = paddleSpeed;
+      // Para jogar com dois jogadores, descomente abaixo:
+      // if (e.key === 'ArrowUp') rightSpeed = -paddleSpeed;
+      // if (e.key === 'ArrowDown') rightSpeed = paddleSpeed;
+    });
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'w' || e.key === 'W') leftSpeed = 0;
+      if (e.key === 's' || e.key === 'S') leftSpeed = 0;
+      // if (e.key === 'ArrowUp') rightSpeed = 0;
+      // if (e.key === 'ArrowDown') rightSpeed = 0;
+    });
+
+    // Simples IA para o lado direito
+    function aiMove() {
+      if (ballY + ballSize / 2 > rightY + paddleHeight / 2) rightSpeed = paddleSpeed;
+      else if (ballY + ballSize / 2 < rightY + paddleHeight / 2) rightSpeed = -paddleSpeed;
+      else rightSpeed = 0;
+    }
+
+    function loop() {
+      aiMove();
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
